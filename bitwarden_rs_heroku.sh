@@ -3,11 +3,11 @@ set -euo pipefail
 
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-BITWARDEN_RS_FOLDER="bitwarden_rs"
+BITWARDEN_RS_FOLDER="vaultwarden"
 CREATE_APP_NAME=" "
 ENABLE_AUTOBUS_BACKUP=0
 ENABLE_DUO=0
-GIT_HASH="master"
+GIT_HASH="main"
 HEROKU_VERIFIED=0
 OFFSITE_HEROKU_DB=" "
 STRATEGY_TYPE="deploy"
@@ -18,7 +18,7 @@ rm -rf ./${BITWARDEN_RS_FOLDER}
 function git_clone {
     GIT_HASH=$1
     echo "Clone current bitwarden_rs with depth 1"
-    git clone --depth 1 https://github.com/dani-garcia/bitwarden_rs.git
+    git clone --depth 1 https://github.com/dani-garcia/vaultwarden.git
     cd ./${BITWARDEN_RS_FOLDER}
     git checkout "${GIT_HASH}"
     cd ..
@@ -36,7 +36,7 @@ function heroku_bootstrap {
     heroku container:login
 
     echo "We must create a Heroku application to deploy to first."
-    APP_NAME=$(heroku create "${CREATE_APP_NAME}" --json | jq --raw-output '.name')
+    APP_NAME=$(heroku create "${CREATE_APP_NAME}" ${HEROKU_CREATE_OPTIONS} --json | jq --raw-output '.name')
 
     if [ "${HEROKU_VERIFIED}" -eq "1" ]
     then
@@ -59,6 +59,7 @@ function heroku_bootstrap {
 
     echo "And set DB connections to seven in order not to saturate the free DB"
     heroku config:set DATABASE_MAX_CONNS=7 -a "${APP_NAME}"
+    heroku config:set DOMAIN="https://${APP_NAME}.herokuapp.com" -a "${APP_NAME}"
 }
 
 function check_addons {
